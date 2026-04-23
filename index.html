@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finance Orbit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <section id="authScreen" class="screen auth-screen active">
+      <div class="hero-copy">
+        <p class="eyebrow">Personal Finance Tracker</p>
+        <h1>Finance Orbit</h1>
+        <p class="hero-text">Track income, expenses, investments, reminders, charts, and daily ledgers in one compact workspace.</p>
+        <div class="auth-highlights">
+          <div class="highlight-card">
+            <strong>Dashboard</strong>
+            <span>Profile, alerts, reminders, and a clean money snapshot.</span>
+          </div>
+          <div class="highlight-card">
+            <strong>Charts</strong>
+            <span>Animated breakdowns for needs, wants, savings, and monthly trends.</span>
+          </div>
+          <div class="highlight-card">
+            <strong>Tables</strong>
+            <span>Monthly summaries, expense breakdowns, and one-row-per-day ledger tracking.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-panel">
+        <div class="panel-toggle">
+          <button class="seg-btn active" data-auth-mode="signup" type="button">Create Account</button>
+          <button class="seg-btn" data-auth-mode="login" type="button">Login</button>
+        </div>
+
+        <form id="signupForm" class="auth-form active">
+          <div class="form-grid two">
+            <label>
+              <span>Name</span>
+              <input type="text" id="signupName" required>
+            </label>
+            <label>
+              <span>Email ID</span>
+              <input type="email" id="signupEmail" required>
+            </label>
+            <label>
+              <span>Password</span>
+              <input type="password" id="signupPassword" required minlength="4">
+            </label>
+            <label>
+              <span>Age</span>
+              <input type="number" id="signupAge" required min="10" max="120">
+            </label>
+            <label>
+              <span>Gender</span>
+              <select id="signupGender" required>
+                <option value="">Select</option>
+                <option>Female</option>
+                <option>Male</option>
+                <option>Non-binary</option>
+                <option>Prefer not to say</option>
+              </select>
+            </label>
+            <label>
+              <span>Monthly Expense Limit</span>
+              <input type="number" id="signupBudget" min="0" step="0.01" value="0">
+            </label>
+          </div>
+
+          <div class="avatar-selector">
+            <div class="section-head">
+              <h2>Choose Character</h2>
+              <button class="text-btn" type="button" id="clearSignupAvatar">Clear Upload</button>
+            </div>
+            <div id="signupAvatarChoices" class="avatar-grid"></div>
+            <label class="upload-tile">
+              <input type="file" id="signupAvatarUpload" accept="image/*">
+              <span>Upload Character</span>
+            </label>
+          </div>
+
+          <button class="primary-btn" type="submit">Create My Account</button>
+        </form>
+
+        <form id="loginForm" class="auth-form">
+          <label>
+            <span>Email ID</span>
+            <input type="email" id="loginEmail" required>
+          </label>
+          <label>
+            <span>Password</span>
+            <input type="password" id="loginPassword" required>
+          </label>
+          <button class="primary-btn" type="submit">Login</button>
+        </form>
+        <p id="authMessage" class="helper-text"></p>
+      </div>
+    </section>
+
+    <section id="appScreen" class="screen app-screen">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Financial control center</p>
+          <h1 id="headerTitle">Dashboard</h1>
+        </div>
+        <div class="header-actions">
+          <button class="icon-text-btn" id="openMenuBtn" type="button">Menu</button>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <section id="dashboardView" class="view active">
+          <div class="hero-strip">
+            <div class="profile-block">
+              <img id="dashboardAvatar" class="avatar-preview" alt="User character">
+              <div>
+                <p class="eyebrow">User Profile</p>
+                <h2 id="dashboardName">-</h2>
+                <p id="dashboardEmail" class="muted">-</p>
+                <p id="dashboardMeta" class="muted">-</p>
+              </div>
+            </div>
+            <div class="hero-actions">
+              <div class="mini-stat">
+                <span>Net Worth Trend</span>
+                <strong id="netWorthTrend">-</strong>
+              </div>
+              <div class="mini-stat warning-box" id="budgetWarningBox">
+                <span>Monthly Limit Watch</span>
+                <strong id="budgetWarningText">Within range</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="overview-strip">
+            <article class="overview-panel spotlight-panel">
+              <div>
+                <p class="eyebrow">This Month</p>
+                <h2 id="monthlyHeadline">No activity yet</h2>
+                <p id="monthlySubline" class="muted">Add your first entry to see a live monthly snapshot.</p>
+              </div>
+              <div class="spotlight-actions">
+                <button class="primary-btn" id="addFirstEntryBtn" type="button">Add Entry</button>
+              </div>
+            </article>
+
+            <article class="overview-panel">
+              <span class="overview-label">Recent Activity</span>
+              <strong id="recentActivityText">0 entries</strong>
+              <p class="muted" id="recentActivitySubtext">No entries recorded yet.</p>
+            </article>
+
+            <article class="overview-panel">
+              <span class="overview-label">Savings Ratio</span>
+              <strong id="savingsRatioText">0%</strong>
+              <p class="muted" id="savingsRatioSubtext">Based on this month's income.</p>
+            </article>
+          </div>
+
+          <div id="dashboardCards" class="stat-grid"></div>
+
+          <div class="dual-grid">
+            <section class="section-block">
+              <div class="section-head">
+                <h2>Investment Reminders</h2>
+                <p class="section-note">Drawn from entries marked for reminders.</p>
+              </div>
+              <div id="reminderList" class="list-stack"></div>
+            </section>
+
+            <section class="section-block">
+              <div class="section-head">
+                <h2>Budget and Allocation</h2>
+                <p class="section-note">This month at a glance.</p>
+              </div>
+              <div id="allocationHighlights" class="list-stack compact"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="chartsView" class="view">
+          <div class="charts-grid">
+            <section class="section-block">
+              <div class="section-head">
+                <h2>Needs / Wants / Savings</h2>
+                <p class="section-note">Use the legend to compare how your month is distributed.</p>
+              </div>
+              <div class="pie-zone">
+                <div class="pie-wrap">
+                  <div id="pieChart3d" class="pie-3d" role="img" aria-label="Needs wants savings pie chart"></div>
+                  <div id="pieLabels" class="pie-labels"></div>
+                </div>
+                <div id="pieLegend" class="legend-stack"></div>
+              </div>
+            </section>
+
+            <section class="section-block">
+              <div class="section-head">
+                <h2>Expense by Category</h2>
+                <p class="section-note">Animated total expense bars.</p>
+              </div>
+              <div id="expenseCategoryChart" class="bar-chart"></div>
+            </section>
+
+            <section class="section-block">
+              <div class="section-head">
+                <h2>Month Wise SIP</h2>
+                <p class="section-note">Monthly buy activity for SIP.</p>
+              </div>
+              <div id="sipMonthChart" class="bar-chart"></div>
+            </section>
+
+            <section class="section-block">
+              <div class="section-head">
+                <h2>Month Wise Total Expenses</h2>
+                <p class="section-note">Compare monthly totals.</p>
+              </div>
+              <div id="totalExpenseMonthChart" class="bar-chart"></div>
+            </section>
+
+            <section class="section-block full-span">
+              <div class="section-head">
+                <div>
+                  <h2>Month Wise Expense Details</h2>
+                  <p class="section-note">Filter one month to inspect category mix.</p>
+                </div>
+                <label class="inline-filter">
+                  <span>Month</span>
+                  <select id="expenseMonthFilter"></select>
+                </label>
+              </div>
+              <div id="filteredExpenseChart" class="bar-chart"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="tablesView" class="view">
+          <div class="tables-stack">
+            <section class="section-block">
+              <div class="section-head">
+                <div>
+                  <h2>Monthly Summary</h2>
+                  <p class="section-note">Zero values are shown as "-".</p>
+                </div>
+                <button class="icon-text-btn" data-export-table="summary" type="button">CSV</button>
+              </div>
+              <div class="table-wrap">
+                <table id="summaryTable"></table>
+              </div>
+            </section>
+
+            <section class="section-block">
+              <div class="section-head">
+                <div>
+                  <h2>Expense Breakdown</h2>
+                  <p class="section-note">Category view by month.</p>
+                </div>
+                <button class="icon-text-btn" data-export-table="breakdown" type="button">CSV</button>
+              </div>
+              <div class="table-wrap">
+                <table id="breakdownTable"></table>
+              </div>
+            </section>
+
+            <section class="section-block">
+              <div class="section-head">
+                <div>
+                  <h2>Ledger</h2>
+                  <p class="section-note">One unique row per date.</p>
+                </div>
+                <div class="filter-group">
+                  <label class="inline-filter">
+                    <span>Month</span>
+                    <select id="ledgerMonthFilter"></select>
+                  </label>
+                  <label class="inline-filter">
+                    <span>Sort</span>
+                    <select id="ledgerSort">
+                      <option value="desc">Newest first</option>
+                      <option value="asc">Oldest first</option>
+                    </select>
+                  </label>
+                  <button class="icon-text-btn" data-export-table="ledger" type="button">CSV</button>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table id="ledgerTable"></table>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="historyView" class="overlay-panel">
+          <div class="overlay-head">
+            <h2>History</h2>
+            <button class="icon-btn close-overlay" data-close-overlay="historyView" type="button">x</button>
+          </div>
+          <div class="table-wrap">
+            <table id="historyTable"></table>
+          </div>
+        </section>
+
+        <section id="entryView" class="overlay-panel">
+          <div class="overlay-head">
+            <h2>Add Entry</h2>
+            <button class="icon-btn close-overlay" data-close-overlay="entryView" type="button">x</button>
+          </div>
+          <form id="entryForm" class="entry-form">
+            <div class="entry-helper">
+              <div class="entry-hint active" data-entry-hint="income">Income adds to your balance. Use this for salary and other credits.</div>
+              <div class="entry-hint" data-entry-hint="expense">Expenses reduce your balance and feed the budget warning.</div>
+              <div class="entry-hint" data-entry-hint="investment">Investments can be buys or sells and also feed savings charts.</div>
+            </div>
+
+            <div class="form-grid three">
+              <label>
+                <span>Date</span>
+                <input type="date" id="entryDate" required>
+              </label>
+              <label>
+                <span>Category Type</span>
+                <select id="entryType" required></select>
+              </label>
+              <label>
+                <span>Sub Type</span>
+                <select id="entrySubType" required></select>
+              </label>
+              <label id="entryActionWrap">
+                <span>Action</span>
+                <select id="entryAction">
+                  <option value="credit">Credit</option>
+                  <option value="debit">Debit</option>
+                </select>
+              </label>
+              <label>
+                <span>Amount</span>
+                <input type="number" id="entryAmount" min="0.01" step="0.01" required>
+              </label>
+              <label>
+                <span>Add Reminder</span>
+                <select id="entryReminder">
+                  <option value="no" selected>No</option>
+                  <option value="yes">Yes</option>
+                </select>
+              </label>
+            </div>
+
+            <div id="entryPreview" class="entry-preview"></div>
+
+            <label>
+              <span>Note</span>
+              <textarea id="entryNote" rows="3" placeholder="SIP installment, salary credit, travel payment..."></textarea>
+            </label>
+            <button class="primary-btn" type="submit">Save Entry</button>
+          </form>
+        </section>
+
+        <section id="settingsView" class="overlay-panel">
+          <div class="overlay-head">
+            <h2>Settings</h2>
+            <button class="icon-btn close-overlay" data-close-overlay="settingsView" type="button">x</button>
+          </div>
+          <form id="settingsForm" class="entry-form">
+            <div class="form-grid two">
+              <label>
+                <span>Name</span>
+                <input type="text" id="settingsName" required>
+              </label>
+              <label>
+                <span>Monthly Expense Limit</span>
+                <input type="number" id="settingsBudget" min="0" step="0.01">
+              </label>
+            </div>
+            <div class="avatar-selector">
+              <div class="section-head">
+                <h3>Character</h3>
+                <label class="upload-tile small">
+                  <input type="file" id="settingsAvatarUpload" accept="image/*">
+                  <span>Upload</span>
+                </label>
+              </div>
+              <div id="settingsAvatarChoices" class="avatar-grid"></div>
+            </div>
+            <div class="settings-actions">
+              <button class="primary-btn" type="submit">Save Settings</button>
+            </div>
+          </form>
+        </section>
+
+        <section id="menuView" class="overlay-panel">
+          <div class="overlay-head">
+            <h2>Menu</h2>
+            <button class="icon-btn close-overlay" data-close-overlay="menuView" type="button">x</button>
+          </div>
+          <div class="menu-grid">
+            <button class="menu-action" id="openEntriesBtn" type="button">
+              <strong>+ Entry</strong>
+              <span>Add a new financial entry.</span>
+            </button>
+            <button class="menu-action" id="openHistoryBtn" type="button">
+              <strong>History</strong>
+              <span>Open the entries log and manage records.</span>
+            </button>
+            <button class="menu-action" id="openSettingsBtn" type="button">
+              <strong>Settings</strong>
+              <span>Update name, budget, and character.</span>
+            </button>
+            <button class="menu-action" id="downloadPdfBtn" type="button">
+              <strong>PDF</strong>
+              <span>Download the user finance report.</span>
+            </button>
+          </div>
+        </section>
+      </main>
+
+      <nav class="bottom-nav">
+        <button class="nav-btn active" data-view="dashboardView" type="button">Dashboard</button>
+        <button class="nav-btn" data-view="chartsView" type="button">Chart</button>
+        <button class="nav-btn" data-view="tablesView" type="button">Tables</button>
+      </nav>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" aria-live="polite"></div>
+</body>
+</html>
