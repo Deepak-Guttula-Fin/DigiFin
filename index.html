@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DigiFin — Financial Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+    <!-- Sidebar Navigation (Desktop) -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-mark">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                    <polygon points="14,2 26,9 26,19 14,26 2,19 2,9" fill="none" stroke="#00e5a0" stroke-width="1.5"/>
+                    <polygon points="14,8 20,12 20,18 14,22 8,18 8,12" fill="#00e5a0" opacity="0.2"/>
+                    <line x1="14" y1="2" x2="14" y2="26" stroke="#00e5a0" stroke-width="0.75" opacity="0.5"/>
+                    <line x1="2" y1="9" x2="26" y2="19" stroke="#00e5a0" stroke-width="0.75" opacity="0.5"/>
+                    <line x1="26" y1="9" x2="2" y2="19" stroke="#00e5a0" stroke-width="0.75" opacity="0.5"/>
+                </svg>
+            </div>
+            <div class="brand-text">
+                <span class="brand-name">DigiFin</span>
+                <span class="brand-sub">Financial OS</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a class="nav-link active" data-view="dashboard" href="#">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a class="nav-link" data-view="analytics" href="#">
+                <i class="fas fa-chart-line"></i>
+                <span>Analytics</span>
+            </a>
+            <a class="nav-link" data-view="datacenter" href="#">
+                <i class="fas fa-database"></i>
+                <span>Data Center</span>
+            </a>
+            <a class="nav-link" data-view="settings" href="#">
+                <i class="fas fa-sliders-h"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <button class="add-btn-sidebar" id="add-entry-btn-sidebar">
+            <i class="fas fa-plus"></i>
+            <span>New Entry</span>
+        </button>
+
+        <div class="sidebar-footer">
+            <div class="user-chip" id="sidebar-user-chip">
+                <div class="user-avatar-sm" id="sidebar-avatar"></div>
+                <div class="user-chip-info">
+                    <span class="user-chip-name" id="sidebar-name">User</span>
+                    <span class="user-chip-role">Member</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Area -->
+    <main class="main-area">
+
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="hamburger" id="hamburger-btn">
+                    <span></span><span></span><span></span>
+                </button>
+                <h1 class="page-title" id="page-title">Dashboard</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="live-clock" id="live-clock"></div>
+                <button class="export-btn-top" id="export-pdf-btn">
+                    <i class="fas fa-arrow-down-to-line"></i>
+                    <span>Export PDF</span>
+                </button>
+                <button class="add-btn-mobile" id="add-entry-btn">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Content Views -->
+        <div class="content-area">
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- DASHBOARD VIEW -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <section class="view active" id="dashboard-view">
+                <div class="view-inner" id="dashboard-content">
+
+                    <!-- Alerts -->
+                    <div id="alerts-container"></div>
+
+                    <!-- Hero Profile Bar -->
+                    <div class="profile-bar">
+                        <div class="profile-avatar-wrap">
+                            <img id="user-avatar" src="" alt="Avatar" class="profile-avatar">
+                            <div class="avatar-fallback" id="avatar-fallback">U</div>
+                            <button class="avatar-edit-btn" id="dashboard-change-character-btn" title="Change avatar">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                            <input type="file" id="dashboard-character-input" accept="image/*" style="display:none">
+                        </div>
+                        <div class="profile-meta">
+                            <h2 class="profile-name" id="user-name">Welcome, User</h2>
+                            <p class="profile-email" id="user-email">—</p>
+                            <p class="profile-details" id="user-details">Age: — &nbsp;|&nbsp; Gender: —</p>
+                        </div>
+                        <div class="profile-budget-badge" id="budget-badge">
+                            <span class="badge-label">Monthly Budget</span>
+                            <span class="badge-value" id="budget-display">₹0</span>
+                        </div>
+                    </div>
+
+                    <!-- Stat Cards -->
+                    <div class="stats-row">
+                        <div class="stat-card balance">
+                            <div class="stat-card-icon"><i class="fas fa-wallet"></i></div>
+                            <div class="stat-card-body">
+                                <p class="stat-label">Net Balance</p>
+                                <p class="stat-value" id="total-balance">₹0.00</p>
+                            </div>
+                            <div class="stat-card-glow"></div>
+                        </div>
+                        <div class="stat-card expense">
+                            <div class="stat-card-icon"><i class="fas fa-receipt"></i></div>
+                            <div class="stat-card-body">
+                                <p class="stat-label">Total Expenses</p>
+                                <p class="stat-value" id="total-expenses">₹0.00</p>
+                            </div>
+                            <div class="stat-card-glow"></div>
+                        </div>
+                        <div class="stat-card invest">
+                            <div class="stat-card-icon"><i class="fas fa-seedling"></i></div>
+                            <div class="stat-card-body">
+                                <p class="stat-label">Investments</p>
+                                <p class="stat-value" id="total-investments">₹0.00</p>
+                            </div>
+                            <div class="stat-card-glow"></div>
+                        </div>
+                    </div>
+
+                    <!-- Two Column: Reminders + Recent Transactions -->
+                    <div class="two-col">
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span class="panel-dot dot-amber"></span>
+                                <h3>Upcoming Tasks</h3>
+                            </div>
+                            <div class="panel-body" id="reminders-list">
+                                <p class="empty-state">No reminders set</p>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span class="panel-dot dot-teal"></span>
+                                <h3>Recent Transactions</h3>
+                            </div>
+                            <div class="panel-body" id="recent-transactions-list">
+                                <p class="empty-state">No transactions yet</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- ANALYTICS VIEW -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <section class="view" id="analytics-view">
+                <div class="view-inner">
+                    <div class="charts-grid">
+                        <div class="chart-panel span-1">
+                            <div class="panel-header">
+                                <span class="panel-dot dot-purple"></span>
+                                <h3>Needs / Wants / Savings</h3>
+                            </div>
+                            <div class="chart-wrap">
+                                <canvas id="pie-chart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-panel span-1">
+                            <div class="panel-header">
+                                <span class="panel-dot dot-teal"></span>
+                                <h3>Monthly Spending</h3>
+                            </div>
+                            <div class="chart-wrap">
+                                <canvas id="monthly-spending-chart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-panel span-2">
+                            <div class="panel-header">
+                                <span class="panel-dot dot-coral"></span>
+                                <h3>Expense Trends by Category</h3>
+                            </div>
+                            <div class="chart-wrap tall">
+                                <canvas id="expense-trends-chart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-panel span-2">
+                            <div class="panel-header">
+                                <span class="panel-dot dot-amber"></span>
+                                <h3>SIP Performance (Month-over-Month)</h3>
+                            </div>
+                            <div class="chart-wrap">
+                                <canvas id="sip-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- DATA CENTER VIEW -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <section class="view" id="datacenter-view">
+                <div class="view-inner">
+                    <div class="tabs-bar">
+                        <button class="tab-btn active" data-tab="monthly">Monthly Summary</button>
+                        <button class="tab-btn" data-tab="expense">Expense Breakdown</button>
+                        <button class="tab-btn" data-tab="ledger">Daily Ledger</button>
+                        <button class="tab-btn" data-tab="history">History</button>
+                    </div>
+
+                    <!-- Monthly Summary -->
+                    <div class="tab-panel active" id="monthly-tab">
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span class="panel-dot dot-teal"></span>
+                                <h3>Monthly Summary</h3>
+                                <button class="csv-btn" data-table="monthly"><i class="fas fa-download"></i> CSV</button>
+                            </div>
+                            <div class="table-scroll">
+                                <table class="data-table" id="monthly-table">
+                                    <thead><tr>
+                                        <th>Month</th><th>Income</th><th>Expenses</th>
+                                        <th>Shares</th><th>SIP</th><th>Asset</th>
+                                        <th>Profit</th><th>Balance</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expense Breakdown -->
+                    <div class="tab-panel" id="expense-tab">
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span class="panel-dot dot-coral"></span>
+                                <h3>Expense Breakdown</h3>
+                                <button class="csv-btn" data-table="expense"><i class="fas fa-download"></i> CSV</button>
+                            </div>
+                            <div class="table-scroll">
+                                <table class="data-table" id="expense-table">
+                                    <thead><tr><th>Month</th><th>Total</th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Ledger -->
+                    <div class="tab-panel" id="ledger-tab">
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span class="panel-dot dot-amber"></span>
+                                <h3>Daily Ledger</h3>
+                                <div class="ledger-controls">
+                                    <div class="date-range">
+                                        <input type="date" id="start-date">
+                                        <span class="date-sep">→</span>
+                                        <input type="date" id="end-date">
+                                        <button id="clear-filter-btn" title="Clear filter"><i class="fas fa-times-circle"></i></button>
+                                    </div>
+                                    <button class="csv-btn" data-table="ledger"><i class="fas fa-download"></i> CSV</button>
+                                </div>
+                            </div>
+                            <div class="table-scroll">
+                                <table class="data-table" id="ledger-table">
+                                    <thead><tr>
+                                        <th>Date</th><th>Income</th><th>Other Inc.</th><th>Redeem</th>
+                                        <th>Home</th><th>Mobile</th><th>Travel</th><th>Health</th>
+                                        <th>Education</th><th>Food</th><th>Entertainment</th><th>Others</th>
+                                        <th>Asset</th><th>Shares</th><th>SIP</th><th>Balance</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- History -->
+                    <div class="tab-panel" id="history-tab">
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span class="panel-dot dot-purple"></span>
+                                <h3>Transaction History</h3>
+                            </div>
+                            <div class="search-wrap">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="datacenter-history-search" placeholder="Search by category, sub-type, note…">
+                            </div>
+                            <div class="table-scroll">
+                                <table class="data-table" id="datacenter-history-table">
+                                    <thead><tr>
+                                        <th>Date</th><th>Category</th><th>Sub-type</th>
+                                        <th>Amount</th><th>Note</th><th>Reminder</th><th>Actions</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- SETTINGS VIEW -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <section class="view" id="settings-view">
+                <div class="view-inner settings-inner">
+                    <div class="settings-panel">
+                        <div class="settings-section-label">Profile</div>
+
+                        <div class="settings-row">
+                            <label>Display Name</label>
+                            <div class="settings-input-group">
+                                <input type="text" id="settings-name" placeholder="Your name">
+                                <button class="settings-save-btn" id="save-name-btn">Save</button>
+                            </div>
+                        </div>
+
+                        <div class="settings-row">
+                            <label>Avatar / Character</label>
+                            <div class="settings-input-group">
+                                <input type="text" id="character-display" readonly placeholder="No image selected">
+                                <button class="settings-save-btn" id="change-character-btn">Choose</button>
+                                <input type="file" id="settings-character" accept="image/*" style="display:none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-panel danger-panel">
+                        <div class="settings-section-label">Account</div>
+                        <div class="settings-row">
+                            <label>Sign Out &amp; Reset Data</label>
+                            <button class="danger-btn" id="sign-out-btn">
+                                <i class="fas fa-power-off"></i> Sign Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div><!-- /content-area -->
+
+        <!-- Bottom Nav (Mobile) -->
+        <nav class="bottom-nav">
+            <a class="bnav-item active" data-view="dashboard" href="#">
+                <i class="fas fa-th-large"></i><span>Home</span>
+            </a>
+            <a class="bnav-item" data-view="analytics" href="#">
+                <i class="fas fa-chart-line"></i><span>Analytics</span>
+            </a>
+            <a class="bnav-item" data-view="datacenter" href="#">
+                <i class="fas fa-database"></i><span>Data</span>
+            </a>
+            <a class="bnav-item" data-view="settings" href="#">
+                <i class="fas fa-sliders-h"></i><span>Settings</span>
+            </a>
+        </nav>
+
+    </main>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- MODALS -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<!-- Welcome Modal -->
+<div class="modal-overlay" id="welcome-modal">
+    <div class="modal-box welcome-modal-box">
+        <div class="modal-step active" id="welcome-step-1">
+            <div class="modal-brand">
+                <svg width="36" height="36" viewBox="0 0 28 28" fill="none">
+                    <polygon points="14,2 26,9 26,19 14,26 2,19 2,9" fill="none" stroke="#00e5a0" stroke-width="1.5"/>
+                    <polygon points="14,8 20,12 20,18 14,22 8,18 8,12" fill="#00e5a0" opacity="0.25"/>
+                </svg>
+                <h2>Welcome to DigiFin</h2>
+            </div>
+            <p class="modal-subtitle">Set up your financial profile to get started.</p>
+
+            <div class="form-grid">
+                <div class="form-field">
+                    <label>Full Name</label>
+                    <input type="text" id="welcome-name" placeholder="Your name">
+                </div>
+                <div class="form-field">
+                    <label>Age</label>
+                    <input type="number" id="welcome-age" placeholder="25">
+                </div>
+                <div class="form-field">
+                    <label>Gender</label>
+                    <select id="welcome-gender">
+                        <option value="">Select…</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Email</label>
+                    <input type="email" id="welcome-email" placeholder="you@email.com">
+                </div>
+                <div class="form-field span-2">
+                    <label>Monthly Budget (₹)</label>
+                    <input type="number" id="welcome-budget" placeholder="50000">
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="showWelcomeStep(2)">Continue <i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <div class="modal-step" id="welcome-step-2">
+            <h2>Choose Your Avatar</h2>
+            <p class="modal-subtitle">Pick a character that represents you.</p>
+
+            <div class="character-grid" id="character-grid">
+                <div class="char-card" data-character="" data-label="Sentinel">
+                    <div class="char-avatar-placeholder">S</div>
+                    <span>The Sentinel</span>
+                </div>
+                <div class="char-card" data-character="" data-label="Alchemist">
+                    <div class="char-avatar-placeholder">A</div>
+                    <span>The Alchemist</span>
+                </div>
+                <div class="char-card" data-character="" data-label="Zen Master">
+                    <div class="char-avatar-placeholder" style="background: linear-gradient(135deg, #1a1a2e, #16213e);">Z</div>
+                    <span>Zen Master</span>
+                </div>
+                <div class="char-card" data-character="" data-label="Catalyst">
+                    <div class="char-avatar-placeholder" style="background: linear-gradient(135deg, #2d1b69, #1a0d3d);">C</div>
+                    <span>The Catalyst</span>
+                </div>
+                <div class="char-card" data-character="" data-label="Librarian">
+                    <div class="char-avatar-placeholder" style="background: linear-gradient(135deg, #0d2137, #091723);">L</div>
+                    <span>The Librarian</span>
+                </div>
+            </div>
+
+            <div class="upload-option">
+                <span>— or —</span>
+                <label class="upload-label" for="welcome-avatar-upload">
+                    <i class="fas fa-upload"></i> Upload your own image
+                    <input type="file" id="welcome-avatar-upload" accept="image/*" style="display:none">
+                </label>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="showWelcomeStep(1)"><i class="fas fa-arrow-left"></i> Back</button>
+                <button class="btn-primary" id="complete-setup-btn">Launch DigiFin <i class="fas fa-rocket"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Entry Modal -->
+<div class="modal-overlay" id="entry-modal">
+    <div class="modal-box">
+        <button class="modal-close" data-close="entry-modal"><i class="fas fa-times"></i></button>
+        <h2>New Transaction</h2>
+
+        <div class="form-grid">
+            <div class="form-field">
+                <label>Date</label>
+                <input type="date" id="entry-date" required>
+            </div>
+            <div class="form-field">
+                <label>Category</label>
+                <select id="entry-category" required>
+                    <option value="">Select…</option>
+                    <option value="income">Income</option>
+                    <option value="expense">Expense</option>
+                    <option value="investment">Investment</option>
+                </select>
+            </div>
+            <div class="form-field">
+                <label>Sub-type</label>
+                <select id="entry-subtype" required>
+                    <option value="">Select sub-type</option>
+                </select>
+            </div>
+            <div class="form-field" id="transaction-type-group" style="display:none">
+                <label>Transaction Type</label>
+                <select id="entry-transaction-type">
+                    <option value="buy">Buy</option>
+                    <option value="sell">Sell</option>
+                    <option value="redeem">Redeem</option>
+                </select>
+            </div>
+            <div class="form-field">
+                <label>Amount (₹)</label>
+                <input type="number" id="entry-amount" step="0.01" placeholder="0.00" required>
+            </div>
+            <div class="form-field span-2">
+                <label>Note</label>
+                <textarea id="entry-note" rows="2" placeholder="Optional note…"></textarea>
+            </div>
+            <div class="form-field span-2">
+                <label class="toggle-label">
+                    <input type="checkbox" id="entry-reminder">
+                    <span class="toggle-switch"></span>
+                    Set as reminder / upcoming task
+                </label>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeEntryModal()">Cancel</button>
+            <button class="btn-primary" onclick="saveTransaction()"><i class="fas fa-check"></i> Save</button>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
