@@ -1,6 +1,7 @@
 {
   "name": "Finance Orbit",
   "short_name": "FinanceOrbit",
+  "id": "finance-orbit-app",
   "description": "Dynamic personal finance tracker with Firebase-backed data.",
   "start_url": "./index.html",
   "scope": "./",
@@ -13,10 +14,32 @@
   "categories": ["finance", "productivity", "business"],
   "icons": [
     {
-      "src": "./icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png", 
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Entry",
+      "short_name": "Add",
+      "description": "Quickly add a financial entry",
+      "url": "./index.html?action=add-entry",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "View Dashboard",
+      "short_name": "Dashboard", 
+      "description": "Open finance dashboard",
+      "url": "./index.html",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
