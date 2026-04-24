@@ -44,9 +44,9 @@
   ],
   "screenshots": [
     {
-      "src": "./screenshot-mobile-1.png",
+      "src": "./screenshot-mobile-1.jpg",
       "sizes": "375x667",
-      "type": "image/png",
+      "type": "image/jpeg",
       "form_factor": "narrow",
       "label": "Finance Orbit Dashboard"
     }
