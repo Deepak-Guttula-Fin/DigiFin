@@ -1,12 +1,16 @@
 {
   "name": "Finance Orbit",
-  "short_name": "Finance Orbit",
+  "short_name": "FinanceOrbit",
   "description": "Dynamic personal finance tracker with Firebase-backed data.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0f141b",
   "theme_color": "#0f141b",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["finance", "productivity", "business"],
   "icons": [
     {
       "src": "./icon.svg",
