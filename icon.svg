@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Finance Orbit">
+  <rect width="512" height="512" rx="96" fill="#0f141b"/>
+  <circle cx="256" cy="200" r="108" fill="#56d6ff"/>
+  <path d="M118 430c20-84 82-132 138-132s118 48 138 132" fill="#7ef29a"/>
+  <path d="M166 216h180v36H166z" fill="#0f141b"/>
+  <path d="M166 272h118v36H166z" fill="#0f141b"/>
+  <circle cx="220" cy="188" r="18" fill="#0f141b"/>
+  <circle cx="292" cy="188" r="18" fill="#0f141b"/>
+</svg>

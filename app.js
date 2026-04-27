@@ -56,6 +56,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   state.selectedSignupAvatar = defaultAvatarDataUrl(avatarPalette[0].id);
   highlightAvatarChoice("signupAvatarChoices", state.selectedSignupAvatar);
   showToast("Data is now connected to Firebase.");
+  registerServiceWorker();
 });
 
 function bindEvents() {
@@ -428,7 +429,10 @@ function renderReminderList(entries) {
           <strong>${entry.subType}</strong>
           <div class="muted">${entry.note || "Reminder from entry"} | ${formatDisplayDate(entry.date)}</div>
         </div>
-        <div>${formatMoney(entry.amount)}</div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span>${formatMoney(entry.amount)}</span>
+          <button class="icon-text-btn danger-btn" data-remove-reminder="${entry.id}" type="button" title="Remove reminder">Remove</button>
+        </div>
       </div>
     `).join("")
     : `<div class="empty-state">No reminders yet. Mark an entry with "Add Reminder = Yes".</div>`;
@@ -460,18 +464,22 @@ function renderCharts() {
   if (!user) return;
   const summary = buildSummary(getEntriesArray(user));
   const currentMonth = summary.months[getCurrentMonthKey()] || createMonthlyBucket(getCurrentMonthKey());
-  renderPieChart(currentMonth);
+  renderPieChart(summary.overall);
   renderBarChart("expenseCategoryChart", expenseCategories.map((name) => ({
     label: name,
     value: summary.overall.expenseBreakdown[name] || 0
   })), ["#56d6ff", "#4ec7f1"]);
 
-  renderBarChart("sipMonthChart", Object.values(summary.months).map((month) => ({
+  renderBarChart("sipMonthChart", Object.values(summary.months)
+    .sort((a, b) => a.key.localeCompare(b.key))
+    .map((month) => ({
     label: month.label,
     value: month.sipBuy
   })), ["#7ef29a", "#4abf7a"]);
 
-  renderBarChart("totalExpenseMonthChart", Object.values(summary.months).map((month) => ({
+  renderBarChart("totalExpenseMonthChart", Object.values(summary.months)
+    .sort((a, b) => a.key.localeCompare(b.key))
+    .map((month) => ({
     label: month.label,
     value: month.expenses
   })), ["#ffcf67", "#c79b38"]);
@@ -480,21 +488,45 @@ function renderCharts() {
   renderFilteredExpenseChart();
 }
 
-function renderPieChart(monthSnapshot) {
+function renderPieChart(overall) {
   const values = [
-    { label: "Needs", value: monthSnapshot.needs, color: "#56d6ff" },
-    { label: "Wants", value: monthSnapshot.wants, color: "#ffcf67" },
-    { label: "Savings", value: monthSnapshot.savings, color: "#7ef29a" }
-  ];
-  const total = values.reduce((sum, item) => sum + item.value, 0) || 1;
-  let running = 0;
+    { label: "Needs", value: overall.needs, color: "#dc2626" },
+    { label: "Wants", value: overall.wants, color: "#eab308" },
+    { label: "Savings", value: overall.savings, color: "#16a34a" }
+  ].filter((item) => item.value > 0);
+
+  if (!values.length) {
+    $("pieChart3d").style.background = "#e5e7eb";
+    $("pieLabels").innerHTML = "";
+    $("pieLegend").innerHTML = '<div class="empty-state">No life till date data</div>';
+    return;
+  }
+
+  const total = values.reduce((sum, item) => sum + item.value, 0);
+  let currentAngle = 0;
   const labelPoints = [];
-  const gradient = values.map((item) => {
-    const start = running / total * 360;
-    running += item.value;
-    const end = running / total * 360;
-    const mid = (start + end) / 2;
-    labelPoints.push({ ...item, angle: mid });
+
+  values.forEach((item) => {
+    const percentage = (item.value / total) * 100;
+    const angle = (percentage / 100) * 360;
+    const start = currentAngle;
+    const end = currentAngle + angle;
+    const midAngle = start + angle / 2;
+
+    labelPoints.push({
+      label: item.label,
+      value: item.value,
+      angle: midAngle
+    });
+
+    currentAngle = end;
+  });
+
+  const gradient = values.map((item, index) => {
+    const start = values.slice(0, index).reduce((sum, prev) => {
+      return sum + (prev.value / total) * 360;
+    }, 0);
+    const end = start + (item.value / total) * 360;
     return `${item.color} ${start}deg ${end}deg`;
   }).join(", ");
 
@@ -601,7 +633,7 @@ function renderLedgerTable() {
   if (!user) return;
   const summary = buildSummary(getEntriesArray(user));
   const headers = [
-    "Date", "Income", "Other Income", "Received", "Borrowing", "Redeem", "Home", "Mobile", "Travel",
+    "Date", "Income", "Other Income", "Redeem", "Home", "Mobile", "Travel",
     "Health", "Education", "Food", "Entertainment", "Others", "Write-off", "Asset Savings", "Shares", "SIP", "Balance"
   ];
 
@@ -614,8 +646,6 @@ function renderLedgerTable() {
       formatDisplayDate(row.date),
       row.income,
       row.otherIncome,
-      row.received,
-      row.borrowing,
       row.redeem,
       row.home,
       row.mobile,
@@ -655,6 +685,9 @@ function renderHistoryTable() {
   document.querySelectorAll("[data-delete-entry]").forEach((button) => {
     button.addEventListener("click", () => deleteEntry(button.dataset.deleteEntry));
   });
+  document.querySelectorAll("[data-remove-reminder]").forEach((button) => {
+    button.addEventListener("click", () => removeReminder(button.dataset.removeReminder));
+  });
 }
 
 async function deleteEntry(id) {
@@ -669,6 +702,24 @@ async function deleteEntry(id) {
     showToast("Entry deleted.");
   } catch {
     showToast("Could not delete entry.");
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function removeReminder(id) {
+  const user = getCurrentUser();
+  if (!user) return;
+  if (!user.entries[id]) return;
+
+  setBusy(true);
+  try {
+    user.entries[id].reminder = false;
+    await db.ref(`users/${user.id}/entries/${id}`).update({ reminder: false });
+    refreshApp();
+    showToast("Reminder removed.");
+  } catch {
+    showToast("Could not remove reminder.");
   } finally {
     setBusy(false);
   }
@@ -699,6 +750,9 @@ function buildSummary(entries) {
     assets: 0,
     profit: 0,
     balance: 0,
+    needs: 0,
+    wants: 0,
+    savings: 0,
     expenseBreakdown: {}
   };
 
@@ -761,11 +815,15 @@ function buildSummary(entries) {
 
   Object.values(months).forEach((month) => {
     month.assets = (month.sipBuy - month.sipSell) + (month.shareBuy - month.shareSell) + (month.assetBuy - month.assetSell);
+    month.savings = (month.sipBuy - month.sipSell) + (month.shareBuy - month.shareSell) + (month.assetBuy - month.assetSell);
     month.profit = month.income - month.expenses;
     month.balance = month.income - month.expenses - month.investments + month.sipSell + month.shareSell + month.assetSell;
     overall.assets += month.assets;
     overall.profit += month.profit;
     overall.balance += month.balance;
+    overall.needs += month.needs;
+    overall.wants += month.wants;
+    overall.savings += month.savings;
   });
 
   const orderedDates = Object.keys(ledger).sort();
@@ -832,7 +890,7 @@ function createLedgerRow(date) {
 function assignBucket(subType, month, amount) {
   if (needsSet.has(subType)) month.needs += amount;
   if (wantsSet.has(subType)) month.wants += amount;
-  if (savingsSet.has(subType)) month.savings += amount;
+  // Savings calculation will be done after all entries are processed
 }
 
 function assignLedgerExpense(day, subType, amount) {
@@ -1057,4 +1115,11 @@ function getEntriesArray(user) {
 
 function setBusy(isBusy) {
   document.body.style.cursor = isBusy ? "progress" : "";
+}
+
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.register("./sw.js").catch(() => {
+    // Best-effort offline support.
+  });
 }
