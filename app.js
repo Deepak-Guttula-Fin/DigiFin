@@ -414,7 +414,7 @@ function renderDashboard() {
   `).join("");
 
   renderReminderList(entries);
-  renderAllocationHighlights(monthSnapshot, user.budget);
+  renderAllocationHighlights(summary.overall, user.budget);
 }
 
 function renderReminderList(entries) {
@@ -438,12 +438,12 @@ function renderReminderList(entries) {
     : `<div class="empty-state">No reminders yet. Mark an entry with "Add Reminder = Yes".</div>`;
 }
 
-function renderAllocationHighlights(monthSnapshot, budget) {
+function renderAllocationHighlights(overall, budget) {
   const list = [
-    { label: "Needs", value: monthSnapshot.needs, cls: "needs" },
-    { label: "Wants", value: monthSnapshot.wants, cls: "wants" },
-    { label: "Savings", value: monthSnapshot.savings, cls: "savings" },
-    { label: "Budget Remaining", value: Math.max((budget || 0) - monthSnapshot.expenses, 0), cls: "needs" }
+    { label: "Needs", value: overall.needs, cls: "needs" },
+    { label: "Wants", value: overall.wants, cls: "wants" },
+    { label: "Savings", value: overall.savings, cls: "savings" },
+    { label: "Budget Remaining", value: Math.max((budget || 0) - overall.expenses, 0), cls: "needs" }
   ];
 
   $("allocationHighlights").innerHTML = list.map((item) => `
